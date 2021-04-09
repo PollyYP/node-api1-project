@@ -1,7 +1,7 @@
 // BUILD YOUR SERVER HERE
 
 const express = require("express");
-const user = require("./users/model");
+const db = require("./users/model");
 
 const server = express();
 
@@ -47,13 +47,15 @@ const server = express();
 // return the following JSON object: { message: "The users information could not be retrieved" }.
 server.get("/api/users", (req, res) => {
   //res.status(200).json("it's work");
-  user
-    .find()
+  db.find()
     .then((users) => {
-      console.log(users);
+      res.json(users);
     })
     .catch((err) => {
-      res.status(500).json({ message: err.message });
+      console.log(err);
+      res
+        .status(500)
+        .json({ message: "The users information could not be retrieved" });
     });
 });
 
@@ -66,6 +68,20 @@ server.get("/api/users", (req, res) => {
 // If there's an error in retrieving the user from the database:
 // respond with HTTP status code 500.
 // return the following JSON object: { message: "The user information could not be retrieved" }.
+
+server.get("/api/users/:id", (req, res) => {
+  const id = req.params.id;
+  db.findById(id)
+    .then((user) => {
+      res.json(user);
+    })
+    .catch((err) => {
+      console.log(err);
+      res
+        .status(404)
+        .json({ message: "The user with the specified ID does not exist" });
+    });
+});
 
 // When the client makes a DELETE request to /api/users/:id:
 
