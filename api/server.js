@@ -20,26 +20,23 @@ const server = express();
 // respond with HTTP status code 500 (Server Error).
 // return the following JSON object: { message: "There was an error while saving the user to the database" }.
 
-server.post("/api/users", (req, res) => {
+server.post("/api/users", async (req, res) => {
   const newUser = req.body;
 
-  if (!newUser.name || !newUser.bio) {
-    res
-      .status(400)
-      .json({ message: "Please provide name and bio for the user" });
-  } else {
-    db.insert(newUser)
-      .then((user) => {
-        res.status(201).json(user);
-      })
-      .catch((err) => {
-        console.log(err);
-        res
-          .status(500)
-          .json({
-            message: "There was an error while saving the user to the database",
-          });
-      });
+  try {
+    if (!newUser.name || !newUser.bio) {
+      res
+        .status(400)
+        .json({ message: "Please provide name and bio for the user" });
+    } else {
+      const addUser = await db.insert(newUser);
+      res.status(201).json(addUser);
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "There was an error while saving the user to the database",
+    });
   }
 });
 
@@ -48,18 +45,17 @@ server.post("/api/users", (req, res) => {
 // If there's an error in retrieving the users from the database:
 // respond with HTTP status code 500.
 // return the following JSON object: { message: "The users information could not be retrieved" }.
-server.get("/api/users", (req, res) => {
-  //res.status(200).json("it's work");
-  db.find()
-    .then((users) => {
-      res.json(users);
-    })
-    .catch((err) => {
-      console.log(err);
-      res
-        .status(500)
-        .json({ message: "The users information could not be retrieved" });
-    });
+
+server.get("/api/users", async (req, res) => {
+  try {
+    const allUsers = await db.find();
+    res.json(allUsers);
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .json({ message: "The users information could not be retrieved" });
+  }
 });
 
 // When the client makes a GET request to /api/users/:id:
@@ -72,24 +68,24 @@ server.get("/api/users", (req, res) => {
 // respond with HTTP status code 500.
 // return the following JSON object: { message: "The user information could not be retrieved" }.
 
-server.get("/api/users/:id", (req, res) => {
+server.get("/api/users/:id", async (req, res) => {
   const id = req.params.id;
-  db.findById(id)
-    .then((user) => {
-      if (!user) {
-        res
-          .status(404)
-          .json({ message: `The user with id ${id} does not exist` });
-      } else {
-        res.json(user);
-      }
-    })
-    .catch((err) => {
-      console.log(err);
+
+  try {
+    const user = await db.findById(id);
+    if (!user) {
       res
-        .status(500)
-        .json({ message: "The user information could not be retrieved" });
-    });
+        .status(404)
+        .json({ message: `The user with id ${id} does not exist` });
+    } else {
+      res.json(user);
+    }
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .json({ message: "The user information could not be retrieved" });
+  }
 });
 
 // When the client makes a DELETE request to /api/users/:id:
@@ -140,8 +136,10 @@ server.delete("/api/users/:id", async (req, res) => {
 // return the newly updated user document.
 
 server.put("/api/users/:id", async (req, res) => {
-  const { id } = req.params;
+  const id = req.params.id;
   const changes = req.body;
+  console.log(changes);
+  console.log(id);
 
   try {
     if (!changes.name || !changes.bio) {
