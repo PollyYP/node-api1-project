@@ -4,6 +4,7 @@ const express = require("express");
 const db = require("./users/model");
 
 const server = express();
+server.use(express.json());
 
 // When the client makes a POST request to /api/users:
 
@@ -69,7 +70,7 @@ server.get("/api/users", async (req, res) => {
 // return the following JSON object: { message: "The user information could not be retrieved" }.
 
 server.get("/api/users/:id", async (req, res) => {
-  const id = req.params.id;
+  const { id } = req.params;
 
   try {
     const user = await db.findById(id);
